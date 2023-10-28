@@ -1,5 +1,6 @@
 package com.example.springboot.controllers;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,15 +15,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.springboot.dtos.ProdutoRecordDto;
 import com.example.springboot.models.ProdutoModel;
 import com.example.springboot.repositories.ProdutoRepository;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 import jakarta.validation.Valid;
-import jakarta.websocket.server.PathParam;
+
 
 @RestController
 public class ProdutoController {
@@ -42,7 +45,16 @@ public class ProdutoController {
 	@GetMapping("/produtos")
 	public ResponseEntity<List<ProdutoModel>> ListarTodos() {
 		
-		return ResponseEntity.status(HttpStatus.OK).body(produtoRepository.findAll());
+		List<ProdutoModel> produtos = produtoRepository.findAll();
+		
+		if (!produtos.isEmpty()) {
+			for (var produto : produtos) {
+				UUID id = produto.getIdProduto();
+				produto.add(linkTo(methodOn(ProdutoController.class).Buscar(id)).withSelfRel());
+			}
+		}
+		
+		return ResponseEntity.status(HttpStatus.OK).body(produtos);
 	}
 	
 	@GetMapping("/produto/{id}")
